@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace Sylius\Tests\Api\Shop;
 
-use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 use Sylius\Component\Payment\Model\PaymentRequestInterface;
 use Sylius\Tests\Api\JsonApiTestCase;
 use Sylius\Tests\Api\Utils\OrderPlacerTrait;
@@ -58,8 +58,6 @@ final class PaymentRequestsTest extends JsonApiTestCase
     }
 
     /**
-     *
-     *
      * @param string[] $fixturesPaths
      *
      * @throws \JsonException
@@ -187,17 +185,12 @@ final class PaymentRequestsTest extends JsonApiTestCase
             ], \JSON_THROW_ON_ERROR),
         );
 
-        $this->assertResponseViolations(
-            $this->client->getResponse(),
-            [
-                ['propertyPath' => '', 'message' => sprintf('The payment request (method code: %s and payment id: %d) has no handler. Please choose another payment method.', $payment->getMethod()->getCode(), $payment->getId())],
-            ],
-        );
+        $this->assertResponseContainsViolations([
+            ['propertyPath' => '', 'message' => sprintf('The payment request (method code: %s and payment id: %d) has no handler. Please choose another payment method.', $payment->getMethod()->getCode(), $payment->getId())],
+        ]);
     }
 
     /**
-     *
-     *
      * @param array<string> $fixturesPaths
      *
      * @throws \JsonException

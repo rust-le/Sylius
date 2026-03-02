@@ -447,7 +447,6 @@ final class CartTest extends JsonApiTestCase
         );
 
         $this->assertResponseViolations(
-            $this->client->getResponse(),
             [
                 ['propertyPath' => '', 'message' => 'Email can be changed only for guest customers. Once the customer logs in and the cart is assigned, the email can\'t be changed.'],
             ],
@@ -471,7 +470,6 @@ final class CartTest extends JsonApiTestCase
         );
 
         $this->assertResponseViolations(
-            $this->client->getResponse(),
             [
                 ['propertyPath' => '', 'message' => 'An empty order cannot be processed.'],
             ],
@@ -510,7 +508,6 @@ final class CartTest extends JsonApiTestCase
         );
 
         $this->assertResponseViolations(
-            $this->client->getResponse(),
             [
                 ['propertyPath' => '', 'message' => 'Please provide a billing address.'],
             ],
@@ -549,7 +546,6 @@ final class CartTest extends JsonApiTestCase
         );
 
         $this->assertResponseViolations(
-            $this->client->getResponse(),
             [
                 ['propertyPath' => '', 'message' => 'Please provide a shipping address.'],
             ],
@@ -582,7 +578,6 @@ final class CartTest extends JsonApiTestCase
         );
 
         $this->assertResponseViolations(
-            $this->client->getResponse(),
             [
                 ['propertyPath' => '', 'message' => 'The country invalid-code does not exist.'],
                 ['propertyPath' => '', 'message' => 'The address without country cannot exist'],
@@ -621,5 +616,59 @@ final class CartTest extends JsonApiTestCase
         $this->requestDelete(sprintf('/api/v2/shop/orders/%s', $tokenValue));
 
         $this->assertResponseCode($this->client->getResponse(), Response::HTTP_NO_CONTENT);
+    }
+
+    #[Test]
+    public function it_returns_unprocessable_entity_when_adding_item_to_non_existing_cart(): void
+    {
+        $this->setUpDefaultPostHeaders();
+
+        $this->loadFixturesFromFiles([
+            'channel/channel.yaml',
+            'cart.yaml',
+            'country.yaml',
+            'shipping_method.yaml',
+            'payment_method.yaml',
+        ]);
+
+        $this->requestPost(
+            uri: '/api/v2/shop/orders/NON_EXISTING_TOKEN/items',
+            body: [
+                'productVariant' => '/api/v2/shop/product-variants/MUG_BLUE',
+                'quantity' => 1,
+            ],
+        );
+
+        $this->assertResponseCode($this->client->getResponse(), Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertStringContainsString('Cart with given token has not been found', $response['hydra:description']);
+    }
+
+    #[Test]
+    public function it_returns_unprocessable_entity_when_adding_non_existing_product_variant_to_cart(): void
+    {
+        $this->setUpDefaultPostHeaders();
+
+        $this->loadFixturesFromFiles([
+            'channel/channel.yaml',
+            'cart.yaml',
+            'country.yaml',
+            'shipping_method.yaml',
+            'payment_method.yaml',
+        ]);
+
+        $tokenValue = $this->pickUpCart();
+
+        $this->requestPost(
+            uri: sprintf('/api/v2/shop/orders/%s/items', $tokenValue),
+            body: [
+                'productVariant' => '/api/v2/shop/product-variants/NON_EXISTING_VARIANT',
+                'quantity' => 1,
+            ],
+        );
+
+        $this->assertResponseCode($this->client->getResponse(), Response::HTTP_UNPROCESSABLE_ENTITY);
+        $response = json_decode($this->client->getResponse()->getContent(), true);
+        $this->assertStringContainsString('does not exist', $response['hydra:description']);
     }
 }

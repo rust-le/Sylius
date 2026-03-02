@@ -30,7 +30,6 @@ final class StatisticsTest extends JsonApiTestCase
         $this->setUpOrderPlacer();
     }
 
-
     #[DataProvider('getIntervals')]
     #[Test]
     public function it_gets_fulfilled_orders_in_specific_year_statistics(string $interval): void
@@ -170,17 +169,13 @@ final class StatisticsTest extends JsonApiTestCase
             server: $this->headerBuilder()->withAdminUserAuthorization('api@example.com')->build(),
         );
 
-        $this->assertResponseViolations(
-            $this->client->getResponse(),
+        $this->assertResponseContainsViolations([
             [
-                [
-                    'propertyPath' => '',
-                    'message' => 'The start date must be earlier than the end date.',
-                ],
+                'propertyPath' => '',
+                'message' => 'The start date must be earlier than the end date.',
             ],
-        );
+        ]);
     }
-
 
     #[DataProvider('missingQueryParameters')]
     #[DataProvider('emptyQueryParameters')]
@@ -199,7 +194,7 @@ final class StatisticsTest extends JsonApiTestCase
             server: $this->headerBuilder()->withAdminUserAuthorization('api@example.com')->build(),
         );
 
-        $this->assertResponseViolations($this->client->getResponse(), $expectedViolations);
+        $this->assertResponseContainsViolations($expectedViolations);
     }
 
     public static function missingQueryParameters(): iterable
